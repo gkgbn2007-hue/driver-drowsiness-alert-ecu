@@ -24,5 +24,9 @@ jobs:
           arduino-cli lib update-index
           arduino-cli lib install "Adafruit GFX Library"
           arduino-cli lib install "Adafruit SSD1306"
+      - name: Prepare Arduino sketch folder
+        run: |
+          mkdir -p /tmp/DriverDrowsinessAlert
+          cp firmware/driver_drowsiness_alert.ino /tmp/DriverDrowsinessAlert/DriverDrowsinessAlert.ino
       - name: Compile for Arduino UNO
-        run: arduino-cli compile --fqbn arduino:avr:uno firmware/driver_drowsiness_alert.ino
+        run: arduino-cli compile --fqbn arduino:avr:uno /tmp/DriverDrowsinessAlert
