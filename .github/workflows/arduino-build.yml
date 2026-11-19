@@ -1,0 +1,28 @@
+name: Arduino firmware build
+
+on:
+  push:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install AVR core and libraries
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+          arduino-cli lib update-index
+          arduino-cli lib install "Adafruit GFX Library"
+          arduino-cli lib install "Adafruit SSD1306"
+      - name: Compile for Arduino UNO
+        run: arduino-cli compile --fqbn arduino:avr:uno firmware/driver_drowsiness_alert.ino
