@@ -24,7 +24,8 @@
 #define OLED_RESET -1
 #define OLED_ADDRESS 0x3C
 
-// Set to LOW if the sensor output goes LOW when eye closure is detected.
+// Set to LOW if the sensor output goes LOW when the configured
+// detected state is present. Verify the actual module output on a bench.
 const uint8_t EYE_CLOSED_LEVEL = HIGH;
 const unsigned long ALERT_AFTER_MS = 2000;
 const unsigned long SENSOR_SAMPLE_MS = 20;
@@ -33,10 +34,12 @@ Adafruit_SSD1306 display(OLED_WIDTH, OLED_HEIGHT, &Wire, OLED_RESET);
 
 unsigned long closedSinceMs = 0;
 unsigned long lastSampleMs = 0;
-bool eyeClosed = false;
 bool alertActive = false;
+bool displayAvailable = false;
 
 void updateDisplay(const char *status) {
+  if (!displayAvailable) return;
+
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
@@ -56,9 +59,9 @@ void setup() {
   digitalWrite(BUZZER_PIN, LOW);
   Serial.begin(9600);
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
-    Serial.println(F("OLED not found; check wiring/address."));
-    // Continue with buzzer and serial even if the optional display is absent.
+  displayAvailable = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
+  if (!displayAvailable) {
+    Serial.println(F("OLED not found; continuing without display."));
   } else {
     updateDisplay("Starting");
   }
@@ -71,10 +74,9 @@ void loop() {
   if (now - lastSampleMs < SENSOR_SAMPLE_MS) return;
   lastSampleMs = now;
 
-  const int sensorValue = digitalRead(IR_SENSOR_PIN);
-  eyeClosed = (sensorValue == EYE_CLOSED_LEVEL);
+  const bool detectedState = (digitalRead(IR_SENSOR_PIN) == EYE_CLOSED_LEVEL);
 
-  if (eyeClosed) {
+  if (detectedState) {
     if (closedSinceMs == 0) closedSinceMs = now;
     alertActive = (now - closedSinceMs >= ALERT_AFTER_MS);
   } else {
